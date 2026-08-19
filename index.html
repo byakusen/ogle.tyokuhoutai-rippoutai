@@ -65,7 +65,7 @@ header{display:block}
 .tab:focus-visible{outline:3px solid var(--navy);outline-offset:2px}
 
 .sheet{background:var(--card);border-radius:0 16px 16px 16px;box-shadow:var(--shadow);padding:13px;flex:1;min-height:0;overflow:hidden}
-#panel-basic,#panel-net,#panel-sketch,#panel-perp,#panel-pos{height:100%;display:flex;flex-direction:column;min-height:0}
+#panel-basic,#panel-net,#panel-sketch,#panel-perp,#panel-pos,#panel-miss{height:100%;display:flex;flex-direction:column;min-height:0}
 
 
 /* ---------- layout ---------- */
@@ -331,13 +331,67 @@ header{display:block}
   .sheet{overflow:visible}
   .cols{grid-template-columns:1fr;height:auto}
   .stage{height:56vh}
-  #panel-basic,#panel-net,#panel-sketch,#panel-perp,#panel-pos{height:auto;display:block}
+  #panel-basic,#panel-net,#panel-sketch,#panel-perp,#panel-pos,#panel-miss{height:auto;display:block}
   .keypad{min-height:300px}
   #count-card,#quiz-card{overflow:visible}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 .pop{animation:pop .28s cubic-bezier(.2,1.5,.4,1)}
 @keyframes pop{0%{transform:scale(.2)}100%{transform:scale(1)}}
+
+/* ---------- 10問チャレンジ ---------- */
+#chal-mount{margin-left:auto}
+#chal-wrap{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.chal-btn{
+  font-family:var(--font-d);font-weight:900;font-size:16px;letter-spacing:.02em;
+  color:#fff;background:#ef7d22;border:2px solid #c95f0c;border-radius:999px;
+  padding:7px 19px;box-shadow:0 3px 0 #a94e08;cursor:pointer;white-space:nowrap;
+  transition:transform .1s,box-shadow .1s;
+}
+.chal-btn:hover{background:#f78c33}
+.chal-btn:active{transform:translateY(2px);box-shadow:0 1px 0 #a94e08}
+.chal-btn.on{background:var(--edge);border-color:#1f7d52;box-shadow:0 3px 0 #17603f}
+.chal-btn.on:hover{background:#37b47c}
+.chal-btn:focus-visible,.chal-btns button:focus-visible{outline:3px solid var(--ink);outline-offset:3px}
+#chal-bar{
+  display:none;align-items:center;gap:9px;background:#fff;border:2px solid var(--edge);
+  border-radius:999px;padding:4px 14px;font-family:var(--font-d);font-weight:900;
+  font-size:14px;color:var(--ink);white-space:nowrap;
+}
+#chal-dots{color:var(--edge);letter-spacing:2px;font-size:16px}
+#chal-result{display:none;position:fixed;inset:0;background:rgba(22,50,76,.5);z-index:900;align-items:center;justify-content:center}
+#chal-result.show{display:flex}
+.chal-card{background:#fff;border-radius:20px;padding:26px 32px;box-shadow:0 12px 40px rgba(22,50,76,.35);text-align:center;max-width:90vw}
+.chal-title{font-family:var(--font-d);font-size:24px;font-weight:900;color:var(--navy);margin-bottom:12px}
+.chal-lines{font-family:var(--font-d);font-size:17px;font-weight:700;line-height:2;color:var(--ink)}
+.chal-lines b{color:var(--vertex);font-size:23px}
+.chal-msg{margin-top:8px;color:#a8760a;font-weight:900}
+.chal-best{margin-top:6px;font-size:13px;color:var(--ink-mid)}
+.chal-btns{display:flex;gap:11px;justify-content:center;margin-top:18px}
+.chal-btns button{font-family:var(--font-d);padding:11px 18px;font-size:16px;font-weight:900;border-radius:12px;cursor:pointer;border:none}
+#btn-chal-again{color:#fff;background:var(--navy)}
+#btn-chal-quit{color:var(--navy);background:#eaf1fa;border:2px solid #b9d1ea}
+
+/* ---------- 間違い探し ---------- */
+#ms-card{flex:0 1 auto;min-height:0;overflow-y:auto}
+.msq{
+  font-family:var(--font-d);font-weight:700;font-size:clamp(15px,2.2vh,18px);line-height:2.2;
+  background:#f5f9fc;border:2px solid var(--line);border-radius:14px;padding:10px 12px;margin-top:8px;
+}
+.msq.ken{background:#eefaf3;border-color:#9fd9bd}
+.msq .who{display:block;font-size:12px;font-weight:900;color:#2c9e6b;margin-bottom:2px}
+.mschip{
+  display:inline-block;font-family:var(--font-d);font-weight:900;font-size:1em;
+  border:2px solid #b9d1ea;background:#fff;color:var(--ink);border-radius:9px;
+  padding:1px 9px;margin:0 1px;cursor:pointer;
+}
+.mschip:hover:not(:disabled){border-color:var(--navy);background:#eaf1fa}
+.mschip:disabled{cursor:default}
+.mschip.bad{background:var(--vertex-soft);border-color:var(--vertex);color:#a52e24}
+.mschip.good{background:var(--edge-soft);border-color:var(--edge);color:#175c3d}
+.mschip:focus-visible{outline:3px solid var(--navy);outline-offset:2px}
+.msq .nw{white-space:nowrap}
+#ms-svg{cursor:default}
 </style>
 </head>
 <body>
@@ -347,6 +401,7 @@ header{display:block}
       <span class="grade">4年 算数</span>
       <h1>直方体と立方体</h1>
       <p>回して、数えて、たしかめる</p>
+      <div id="chal-mount"></div>
     </div>
     <nav class="tabs" role="tablist">
       <button class="tab" role="tab" aria-selected="true"  data-tab="basic">直方体と立方体</button>
@@ -354,6 +409,7 @@ header{display:block}
       <button class="tab" role="tab" aria-selected="false" data-tab="sketch">見取図</button>
       <button class="tab" role="tab" aria-selected="false" data-tab="perp">面や辺の垂直、平行</button>
       <button class="tab" role="tab" aria-selected="false" data-tab="pos">位置の表し方</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="miss">間違い探し</button>
     </nav>
   </header>
 
@@ -646,9 +702,224 @@ header{display:block}
       </div>
     </div>
 
+    <!-- ===== TAB 6 間違い探し ===== -->
+    <div id="panel-miss" style="display:none">
+      <div class="cols">
+        <div class="left">
+          <div class="stage">
+            <svg id="ms-svg" preserveAspectRatio="xMidYMid meet" role="img" aria-label="まちがいさがしの図"></svg>
+          </div>
+          <p class="factline" id="ms-fact"></p>
+        </div>
+        <div class="panel">
+          <div class="mode-switch tri" id="ms-sub">
+            <button data-mssub="net" aria-pressed="true">展開図</button>
+            <button data-mssub="say" aria-pressed="false">説明</button>
+            <button data-mssub="pos" aria-pressed="false">位置</button>
+          </div>
+          <div class="card" id="ms-card">
+            <p class="qtext">まちがいは<b>1つだけ</b>です。まちがっているところをタップしましょう。</p>
+            <div class="msq" id="ms-say" style="display:none"></div>
+          </div>
+          <div class="card dtools">
+            <div class="dbtns">
+              <button class="ghost" data-msact="new">別の問題</button>
+              <button class="ghost hintbtn" data-msact="hint">ヒント</button>
+            </div>
+            <p class="ptip" id="ms-tip"></p>
+            <div class="kp-msg" id="ms-msg"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
+<script>
+/* ============================================================
+   challenge10.js（アプリに埋めこんだもの）
+   もと：challenge10.js（warizan81_kangae.html ⑪81 から取り出したもの）
+   ちがいは2つだけ。
+     ・見た目のCSSは、このアプリのスタイルシートに入れてある（init に css:false をわたす）
+     ・autoNext を足した。false にすると done() のあとに next() を呼ばない。
+       このアプリは正解したあと自動でつぎの問題に進むしくみを各タブが持っているので、
+       進める役はアプリ側にまかせ、チャレンジは数えるだけにしている。
+   ============================================================ */
+(function (global) {
+    'use strict';
+
+    var BAR_HTML =
+        '<button id="btn-challenge" class="chal-btn" type="button"></button>' +
+        '<div id="chal-bar"><span id="chal-dots"></span><span id="chal-count"></span></div>';
+
+    var RESULT_HTML =
+        '<div class="chal-card">' +
+        '  <div class="chal-title">🏁 <span id="chal-total-title"></span>問 できました！</div>' +
+        '  <div class="chal-lines" id="chal-lines"></div>' +
+        '  <div class="chal-btns">' +
+        '    <button id="btn-chal-again" type="button">もう一度チャレンジ</button>' +
+        '    <button id="btn-chal-quit" type="button">やめる</button>' +
+        '  </div>' +
+        '</div>';
+
+    var cfg = null;
+    var chal = { on: false, total: 10, no: 0, miss: 0, missNow: 0, perfect: 0, t0: 0 };
+    var $ = function (id) { return document.getElementById(id); };
+
+    // --- きょうの記録（localStorage。使えないときは だまって何もしない）---
+    function todayKey() {
+        var d = new Date();
+        return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+    }
+    function loadBest() {
+        if (!cfg.record) return null;
+        try {
+            var raw = localStorage.getItem(cfg.recordKey);
+            if (!raw) return null;
+            var o = JSON.parse(raw);
+            return (o && o.day === todayKey() && o.total === chal.total) ? o : null;
+        } catch (e) { return null; }
+    }
+    function saveBest(perfect, sec) {
+        if (!cfg.record) return null;
+        var best = loadBest();
+        if (best && (best.perfect > perfect || (best.perfect === perfect && best.sec <= sec))) return best;
+        var o = { day: todayKey(), perfect: perfect, sec: sec, total: chal.total };
+        try { localStorage.setItem(cfg.recordKey, JSON.stringify(o)); } catch (e) { }
+        return o;
+    }
+
+    // --- 帯（○○○●…）の書きかえ ---
+    function chalUpdateBar() {
+        if (!$('btn-challenge')) return;
+        $('btn-challenge').classList.toggle('on', chal.on);
+        $('chal-bar').style.display = chal.on ? 'flex' : 'none';
+        if (!chal.on) return;
+        var dots = '';
+        for (var i = 0; i < chal.total; i++) dots += (i < chal.no) ? '●' : '○';
+        $('chal-dots').innerText = dots;
+        $('chal-count').innerText = Math.min(chal.no + 1, chal.total) + '問め / ' + chal.total;
+    }
+
+    // --- はじめから数えなおす ---
+    function chalReset() {
+        chal.no = 0; chal.miss = 0; chal.missNow = 0; chal.perfect = 0; chal.t0 = Date.now();
+        if ($('chal-result')) $('chal-result').classList.remove('show');
+        chalUpdateBar();
+    }
+
+    // --- 1問おわったときに呼ぶ ---
+    function chalDone() {
+        if (!chal.on) return;
+        if (chal.missNow === 0) chal.perfect++;
+        chal.no++;
+        chalUpdateBar();
+        if (chal.no < chal.total) {
+            if (!cfg.autoNext) { chal.missNow = 0; return; }   // 進める役はアプリ側
+            setTimeout(function () {         // つぎの問題へ
+                if (!chal.on) return;
+                chal.missNow = 0;
+                if (cfg.next) cfg.next();
+            }, cfg.nextDelay);
+            return;
+        }
+        var sec = Math.floor((Date.now() - chal.t0) / 1000);
+        var msg = (chal.perfect === chal.total) ? 'ぜんぶノーミス！ すばらしい！'
+                : (chal.perfect >= chal.total - 2) ? 'よくがんばりました！'
+                : 'つぎは もっとできる！';
+        var best = saveBest(chal.perfect, sec);
+        var result = { perfect: chal.perfect, miss: chal.miss, sec: sec, total: chal.total };
+        setTimeout(function () {
+            $('chal-total-title').innerText = chal.total;
+            $('chal-lines').innerHTML =
+                '<div>ノーミスでできた問題　<b>' + chal.perfect + '</b> / ' + chal.total + '</div>' +
+                '<div>まちがえた回数　<b>' + chal.miss + '</b> 回</div>' +
+                '<div>かかった時間　<b>' + Math.floor(sec / 60) + '</b> 分 <b>' + (sec % 60) + '</b> 秒</div>' +
+                '<div class="chal-msg">' + msg + '</div>' +
+                (best ? '<div class="chal-best">きょうの最高記録　ノーミス ' + best.perfect + ' / ' + best.total +
+                        ' 問　　' + Math.floor(best.sec / 60) + '分' + (best.sec % 60) + '秒</div>' : '');
+            $('chal-result').classList.add('show');
+            $('btn-chal-again').focus();
+            if (cfg.onFinish) cfg.onFinish(result);
+        }, cfg.resultDelay);
+    }
+
+    // --- はじめの用意 ---
+    function init(opt) {
+        opt = opt || {};
+        cfg = {
+            total: opt.total || 10,
+            next: opt.next || null,
+            autoNext: (opt.autoNext === undefined) ? true : opt.autoNext,
+            nextDelay: (opt.nextDelay === undefined) ? 1800 : opt.nextDelay,
+            resultDelay: (opt.resultDelay === undefined) ? 1500 : opt.resultDelay,
+            label: opt.label || '🏁 10問チャレンジ',
+            sound: opt.sound || null,
+            onToggle: opt.onToggle || null,
+            onFinish: opt.onFinish || null,
+            record: !!opt.record,
+            recordKey: opt.recordKey || 'challenge10',
+            css: (opt.css === undefined) ? true : opt.css
+        };
+        chal.total = cfg.total;
+        if (opt.label === undefined && cfg.total !== 10) cfg.label = '🏁 ' + cfg.total + '問チャレンジ';
+
+        var host = (typeof opt.mount === 'string') ? document.querySelector(opt.mount) : opt.mount;
+        var wrap = $('chal-wrap');
+        if (!wrap) {
+            wrap = document.createElement('div');
+            wrap.id = 'chal-wrap';
+            wrap.innerHTML = BAR_HTML;
+            if (host) host.appendChild(wrap);
+            else document.body.insertBefore(wrap, document.body.firstChild);
+        }
+        if (!$('chal-result')) {
+            var res = document.createElement('div');
+            res.id = 'chal-result';
+            res.innerHTML = RESULT_HTML;
+            document.body.appendChild(res);
+        }
+        $('btn-challenge').innerText = cfg.label;
+
+        $('btn-challenge').addEventListener('click', function () {
+            chal.on = !chal.on;
+            if (cfg.sound) cfg.sound();
+            chalReset();
+            if (cfg.onToggle) cfg.onToggle(chal.on);
+            if (cfg.next) cfg.next();
+        });
+        $('btn-chal-again').addEventListener('click', function () {
+            chalReset();
+            if (cfg.next) cfg.next();
+        });
+        $('btn-chal-quit').addEventListener('click', function () {
+            chal.on = false;
+            chalReset();
+            if (cfg.onToggle) cfg.onToggle(false);
+            if (cfg.next) cfg.next();
+        });
+
+        chalUpdateBar();
+        return API;
+    }
+
+    var API = {
+        init: init,
+        done: chalDone,                                        // 1問できた
+        miss: function () { if (chal.on) { chal.miss++; chal.missNow++; } },  // まちがえた
+        newProblem: function () { chal.missNow = 0; },          // 新しい問題を出した
+        reset: chalReset,                                       // 数えなおす
+        stop: function () { chal.on = false; chalReset(); },    // やめる
+        isOn: function () { return chal.on; },
+        updateBar: chalUpdateBar,
+        setTotal: function (n) { chal.total = cfg.total = n; chalReset(); },
+        state: chal
+    };
+
+    global.Challenge10 = API;
+})(window);
+</script>
 <script>
 /* ============ 3D geometry ============ */
 const V=[[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]];
@@ -944,6 +1215,7 @@ function setMode(m){
   S.input='';
   if(m==='count'){S.dims=null;S.labels=null;S.marks=null;render();updateTally();}
   else{S.counted=[];startQuiz();}
+  chalSync();
 }
 document.getElementById('m-count').addEventListener('click',()=>setMode('count'));
 document.getElementById('m-quiz').addEventListener('click',()=>setMode('quiz'));
@@ -1101,6 +1373,7 @@ function startQuiz(){
 }
 function showQ(){
   clearTimeout(S.timer);
+  Challenge10.newProblem();
   const Q=S.quiz, q=Q.list[Q.i];
   S.dims=q.dims; S.labels=q.nolabel?null:q.dims; S.marks=q.marks||null;
   S.counted=[]; S.input=''; Q.answered=false; S.featHint=false; S.hl=null; render();
@@ -1173,6 +1446,8 @@ function quizAnswer(val,btn){
     j.innerHTML=`<b>${ok?'◯ せいかい！':'× おしい！ こたえは '+ansTxt}</b>${q.e}`;
   }
   document.getElementById('q-score').textContent=`せいかい ${Q.score}`;
+  if(!ok)Challenge10.miss();
+  Challenge10.done();                 // 正解でもまちがいでも「1問おわり」
   refreshKeypad(null);
   clearTimeout(S.timer);
   S.timer=setTimeout(nextQ, ok?2600:4200);
@@ -1181,6 +1456,7 @@ function nextQ(){
   const Q=S.quiz;
   if(!Q||S.mode==='count'||Q.done)return;
   if(Q.i<Q.list.length-1){Q.i++;showQ();}
+  else if(Challenge10.isOn()){startQuiz();}   // チャレンジ中は成せき表を出さずに続ける
   else{
     document.getElementById('q-count').textContent='おわり';
     document.getElementById('q-score').textContent='';
@@ -1424,12 +1700,14 @@ function checkDraw(id){
     m.className='kp-msg show ok';
     m.textContent=fix?'せいかい！ 見えない辺は点線に直しました。':'せいかい！ かんぺきです。つぎの問題にうつります。';
     celebrate(document.querySelector('#panel-'+id+' .stage'));
+    Challenge10.done();
     // タブ1と同じ。花丸（1.6秒）が消えて1秒後に、つぎの問題へ
     clearTimeout(c.timer);
     c.timer=setTimeout(()=>newProblem(id), 2600);
   }else{
     m.className='kp-msg show ng';
     m.textContent=`まだです。たりない線が${miss}本、いらない線が${extra}本あります。`;
+    Challenge10.miss();
   }
 }
 document.querySelectorAll('[data-act]').forEach(b=>b.addEventListener('click',()=>{
@@ -1447,6 +1725,7 @@ document.querySelectorAll('[data-act]').forEach(b=>b.addEventListener('click',()
 }));
 function newProblem(id){
   clearTimeout(DRAWS[id].timer);
+  Challenge10.newProblem();
   DRAWS[id].make();
   const s=DRAWS[id].solid;
   document.getElementById(id+'-sample').innerHTML=solidSVG(s.w,s.h,s.d,330,240);
@@ -1533,6 +1812,7 @@ function perpOpts(q){
 }
 function perpNew(){
   clearTimeout(PERP.timer);
+  Challenge10.newProblem();
   PERP.q=perpMake(); PERP.sel=[]; PERP.hintOn=false; PERP.ex=null;
   PERP.opts=perpOpts(PERP.q);
   const hb=document.querySelector('[data-pact="hint"]'); if(hb)hb.textContent='ヒント';
@@ -1663,11 +1943,13 @@ function perpCheck(){
     m.className='kp-msg show ok';
     m.textContent=`せいかい！ ${q.e}`;
     celebrate(document.querySelector('#panel-perp .stage'));
+    Challenge10.done();
     clearTimeout(PERP.timer);
     PERP.timer=setTimeout(perpNew,2600);   // 花丸が消えて1秒後につぎの問題へ
   }else{
     m.className='kp-msg show ng';
     m.textContent=`まだです。たりないものが${miss}${u}、いらないものが${extra}${u}あります。`;
+    Challenge10.miss();
   }
 }
 document.querySelectorAll('[data-pact]').forEach(b=>b.addEventListener('click',()=>{
@@ -1852,6 +2134,7 @@ function posMakeGrid(k){
 }
 function posNew(){
   clearTimeout(POS.timer);
+  Challenge10.newProblem();
   POS.q=posMake(); POS.vals=[]; POS.slot=0; POS.pick=null; POS.hintOn=false;
   const hb=document.querySelector('[data-posact="hint"]'); if(hb)hb.textContent='ヒント';
   document.getElementById('pos-tip').className='ptip';
@@ -2125,10 +2408,12 @@ function posCheck(){
   if(ok){
     m.className='kp-msg show ok'; m.textContent='せいかい！ '+q.e;
     celebrate(document.querySelector('#panel-pos .stage'));
+    Challenge10.done();
     clearTimeout(POS.timer); POS.timer=setTimeout(posNew,2600);
   }else{
     m.className='kp-msg show ng';
     m.textContent='まだです。もとにする点から、順に数えなおしてみましょう。';
+    Challenge10.miss();
     if(q.slots){POS.vals=q.slots.map(()=>null);POS.slot=0;}else{POS.pick=null;}
     posAns(); posRender();
   }
@@ -2489,6 +2774,7 @@ function nqFold(to){
 }
 function nqNew(){
   clearTimeout(NQ.timer); cancelAnimationFrame(NQ.raf);
+  Challenge10.newProblem();
   NQ.q=nqMake(); NQ.sel=[]; NQ.hintOn=false; NQ.t=0;
   document.getElementById('nq-text').innerHTML=NQ.q.q
     .replace('垂直','<span class="w-perp">垂直</span>')
@@ -2508,10 +2794,12 @@ function nqCheck(){
   if(!miss&&!extra){
     m.className='kp-msg show ok'; m.textContent='せいかい！ '+q.e;
     celebrate(document.querySelector('#net-quiz .stage'));
+    Challenge10.done();
     clearTimeout(NQ.timer); NQ.timer=setTimeout(nqNew,2600);
   }else{
     m.className='kp-msg show ng';
     m.textContent=`まだです。たりないものが${miss}${q.unit}、いらないものが${extra}${q.unit}あります。`;
+    Challenge10.miss();
   }
 }
 document.querySelectorAll('[data-nqact]').forEach(b=>b.addEventListener('click',()=>{
@@ -2546,6 +2834,7 @@ document.querySelectorAll('[data-nsub]').forEach(b=>b.addEventListener('click',(
   document.querySelectorAll('[data-nsub]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.nsub===v)));
   if(v==='quiz'&&!NQ.q)nqNew();
   if(v==='judge'&&!CJ.net)cjNew();
+  chalSync();
 }));
 
 /* ============ 展開図をたたんで見せる（「見分け」と「えらぶ」で共通） ============ */
@@ -2687,6 +2976,7 @@ function cjHoles(net){
 }
 function cjNew(){
   cancelAnimationFrame(CJ.raf);
+  Challenge10.newProblem();
   CJ.ok=(CJ.last===null)?(Math.random()<0.5):!CJ.last;   // 「なる」「ならない」を交互に
   CJ.last=CJ.ok;
   const src=CJ.ok?pick(CJ_OK):(Math.random()<0.65?pick(CJ_NG_HARD):pick(CJ_NG_EASY));
@@ -2780,6 +3070,8 @@ function cjAnswer(v,btn){
     :'この形は立方体になりません。赤くぬった面が2まい重なり、赤い点線のところに面がありません。')
     +'（「別の問題」で次へ）';
   if(ok)celebrate(document.querySelector('#net-judge .stage'));
+  else Challenge10.miss();
+  Challenge10.done();                 // 2たくなので、答えたところで「1問おわり」
   cjFold(1);                                   // 答えたら、そのままたたんで見せる
   /* ここでは自動で次へ進まない。何度でもたたみ直したり回したりして確かめられるように、
      次の問題へは「別の問題」を押してもらう。 */
@@ -2827,6 +3119,7 @@ function csLabels(net){
 }
 function csNew(){
   clearTimeout(CS.timer); cancelAnimationFrame(CS.raf);
+  Challenge10.newProblem();
   const three=shuffle(CSDIMS.slice()).slice(0,3);      // 3つとも辺の組み合わせがちがう
   const key=a=>a.slice().sort((x,y)=>x-y).join(',');
   CS.net=nqBuild(cjVariant(pick(NQNETS)),shuffle(three[0].slice()));
@@ -2903,6 +3196,7 @@ function csAnswer(k){
     CS.tried.push(k);
     m.className='kp-msg show ng';
     m.textContent='ちがいます。展開図の辺の長さを、もう一度たしかめましょう。';
+    Challenge10.miss();
     csRender(); return;
   }
   CS.answered=true;
@@ -2910,6 +3204,7 @@ function csAnswer(k){
   m.className='kp-msg show ok';
   m.textContent=`せいかい！ ${d.join('cm・')}cm の3つの辺でできた直方体です。`;
   celebrate(document.querySelector('#sketch-pick .stage'));
+  Challenge10.done();
   csFold(1);                                   // 正かいしたら、実さいにたたんで見せる
   clearTimeout(CS.timer);
   CS.timer=setTimeout(csNew,5600);
@@ -2937,16 +3232,426 @@ document.querySelectorAll('[data-ssub]').forEach(b=>b.addEventListener('click',(
   document.getElementById('sketch-pick').style.display=(v==='pick')?'':'none';
   document.querySelectorAll('[data-ssub]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.ssub===v)));
   if(v==='pick'&&!CS.net)csNew();
+  chalSync();
 }));
 
 /* ============ tabs ============ */
-const PANELS=['basic','net','perp','sketch','pos'];
+const PANELS=['basic','net','perp','sketch','pos','miss'];
 document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
   document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-selected',x===t));
   PANELS.forEach(p=>document.getElementById('panel-'+p).style.display=(p===t.dataset.tab)?'':'none');
+  chalSync();
 }));
 
 render(); updateTally();
+</script>
+<script>
+/* ============================================================
+   タブ6「間違い探し」
+   ------------------------------------------------------------
+   わざと1か所だけまちがえた図や文を見せて、まちがいをタップさせる。
+   3つのモードがあるが、答え方は「まちがっているところを1つタップ」で統一。
+     展開図 …… 面をタップ（面の長さ／面の数）
+     説明  …… 説明文の中の辺の記号をタップ（垂直・平行のまちがい）
+     位置  …… （横◯、たて◯、高さ◯）の数をタップ
+   ============================================================ */
+const MS={mode:'net',q:null,answered:false,tried:[],hintOn:false,timer:null,last:{}};
+
+/* ---- 方眼の下じき（タブ2・3の drawGrid と同じ見た目） ---- */
+function msGridBG(cols,rows){
+  const W=PAD*2+cols*CELL, H=PAD*2+rows*CELL;
+  let g=`<rect x="0" y="0" width="${W}" height="${H}" fill="#fff" rx="10"/>`;
+  for(let x=0;x<=cols;x++)g+=`<line x1="${PAD+x*CELL}" y1="${PAD}" x2="${PAD+x*CELL}" y2="${PAD+rows*CELL}" stroke="#c9dced" stroke-width="1.4"/>`;
+  for(let y=0;y<=rows;y++)g+=`<line x1="${PAD}" y1="${PAD+y*CELL}" x2="${PAD+cols*CELL}" y2="${PAD+y*CELL}" stroke="#c9dced" stroke-width="1.4"/>`;
+  return g;
+}
+function msNormRects(fs){
+  let xa=1e9,ya=1e9,xb=-1e9,yb=-1e9;
+  fs.forEach(f=>{xa=Math.min(xa,f.r[0]);ya=Math.min(ya,f.r[1]);xb=Math.max(xb,f.r[2]);yb=Math.max(yb,f.r[3]);});
+  const dx=1-xa, dy=1-ya;
+  fs.forEach(f=>f.r=[f.r[0]+dx,f.r[1]+dy,f.r[2]+dx,f.r[3]+dy]);
+  return {cols:(xb-xa)+2, rows:(yb-ya)+2};
+}
+
+/* ---- 記号つきの立体（静止画）----
+   solidSVG と同じかき方。ちがうのは
+     ・頂点の記号A〜H、面の記号あ を出せる
+     ・gk:true でおくゆきを縮めてかく（タブ5と同じ見え方）
+     ・辺や頂点を色づけできる                                     */
+function msSolid(dw,dh,dd,W,H,o){
+  o=o||{};
+  const cx=W/2, cy=H/2;
+  const kx=o.gk?GKX/0.7071:1, ky=o.gk?GKY/0.7071:1;
+  const P=V.map(v=>{const b=(1-v[2])/2*dd; return [v[0]*dw/2+b*kx, v[1]*dh/2+b*ky];});
+  const xs=P.map(p=>p[0]), ys=P.map(p=>p[1]);
+  const x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
+  const pad=o.pad||56, sc=Math.min((W-pad*2)/(x1-x0),(H-pad*2)/(y1-y0));
+  const ox=(x0+x1)/2, oy=(y0+y1)/2;
+  const pts=P.map(p=>[cx+(p[0]-ox)*sc, cy-(p[1]-oy)*sc]);
+  const vis=FACES.map(f=>{const a=P[f[0]],b=P[f[1]],c=P[f[2]];
+    const e1=[b[0]-a[0],b[1]-a[1]], e2=[c[0]-a[0],c[1]-a[1]];
+    return (e1[0]*e2[1]-e1[1]*e2[0])>0.0001;});
+  const eV=i=>edgeFaces[i].some(f=>vis[f]);
+  const P2=i=>pts[i][0].toFixed(1)+','+pts[i][1].toFixed(1);
+  const hlE=o.hlE||{}, hlV=o.hlV||{};
+  let g='';
+  FACES.forEach((f,i)=>{ if(!vis[i])return;
+    g+=`<polygon points="${f.map(P2).join(' ')}" fill="#3f7fc4" opacity=".12"/>`;});
+  if(o.mark!=null){                                  // 面の記号「あ」
+    const f=FACES[o.mark], mx=f.reduce((s,i)=>s+pts[i][0],0)/4, my=f.reduce((s,i)=>s+pts[i][1],0)/4;
+    g+=`<circle cx="${mx}" cy="${my}" r="17" fill="#fffdf3" stroke="${o.markCol||'#8a6a00'}" stroke-width="2.5"/>`
+      +`<text x="${mx}" y="${my+6}" text-anchor="middle" font-family="Zen Maru Gothic,sans-serif" font-weight="900" font-size="17" fill="${o.markCol||'#8a6a00'}">あ</text>`;
+  }
+  EDGES.forEach((e,i)=>{
+    const c=hlE[i], w=c?5.5:(eV(i)?3:2);
+    g+=`<line x1="${pts[e[0]][0]}" y1="${pts[e[0]][1]}" x2="${pts[e[1]][0]}" y2="${pts[e[1]][1]}" `
+      +`stroke="${c||(eV(i)?'#16324c':'#8fa8bd')}" stroke-width="${w}" ${eV(i)?'':'stroke-dasharray="8 6"'} stroke-linecap="round"/>`;});
+  (o.dims||[]).forEach(d=>{
+    const [a,b,val,unit]=d;
+    const ax=pts[a][0],ay=pts[a][1],bx=pts[b][0],by=pts[b][1];
+    let dx=bx-ax,dy=by-ay,L=Math.hypot(dx,dy)||1; dx/=L; dy/=L;
+    let nx=-dy,ny=dx; const mx=(ax+bx)/2,my=(ay+by)/2;
+    if(((mx-cx)*nx+(my-cy)*ny)<0){nx=-nx;ny=-ny;}
+    const bl=Math.min(26,Math.max(17,L*0.18));
+    g+=`<path d="M${ax} ${ay} Q${mx+nx*bl*2} ${my+ny*bl*2} ${bx} ${by}" fill="none" stroke="#5b7a94" stroke-width="1.6" stroke-dasharray="5 4"/>`
+      +`<text x="${mx+nx*bl}" y="${my+ny*bl+5}" text-anchor="middle" font-family="Zen Maru Gothic,sans-serif" font-weight="900" font-size="16" fill="#16324c" stroke="#fff" stroke-width="5" paint-order="stroke">${val}${unit||'cm'}</text>`;});
+  if(o.labels)V.forEach((v,i)=>{
+    let ux=pts[i][0]-cx, uy=pts[i][1]-cy; const L=Math.hypot(ux,uy)||1; ux/=L; uy/=L;
+    const col=hlV[i]||'#16324c';
+    if(o.circV===i)g+=`<circle cx="${pts[i][0]}" cy="${pts[i][1]}" r="9" fill="none" stroke="#e0483b" stroke-width="3"/>`;
+    g+=`<circle cx="${pts[i][0]}" cy="${pts[i][1]}" r="${hlV[i]?5:3.5}" fill="${col}"/>`
+      +`<text x="${pts[i][0]+ux*19}" y="${pts[i][1]+uy*19+6}" text-anchor="middle" font-family="Zen Maru Gothic,sans-serif" font-weight="900" font-size="18" fill="${col}" stroke="#f5f9fc" stroke-width="5" paint-order="stroke">${VNAME[i]}</text>`;});
+  return {svg:g, W:W, H:H};
+}
+
+/* ============ ① 展開図のまちがい ============ */
+/* やっこ形の展開図を「面ごとの寸法」で組み立てる。
+   ふつうは 左のよこ＝右のよこ＝上のたて＝下のたて（＝おくゆき）、
+   前のよこ＝後ろのよこ（＝よこ）、よこ4面のたては全部同じ（＝高さ）。
+   そのうち1つだけを1ますだけ変える。まわりの面はそれに合わせてずれるので、
+   展開図の外がわの形はくずれず、長さをくらべないと見つからない。 */
+function msMakeNet(){
+  const opts=[];
+  for(let w=2;w<=4;w++)for(let t=1;t<=2;t++)for(let d=1;d<=2;d++)
+    if(solidOK(w,t,d))opts.push([w,t,d]);
+  const [w,t,d]=pick(opts);
+  // lw=左のよこ rw=右のよこ th=上のたて bh=下のたて bw=後ろのよこ
+  // ※「左・右・後ろのたて」は変えない。変えると、よこ1列にすきまや段ができて
+  //   長さをくらべるまでもなく一目で分かってしまうため。
+  const D={lw:d, rw:d, th:d, bh:d, bw:w};
+
+  const kinds=['size','size','size','extra'];      // 4回に1回くらい「面の数」
+  let kind=pick(kinds); if(kind===MS.last.net&&kind==='extra')kind='size';
+  MS.last.net=kind;
+
+  let bad=-1,e='',tip='';
+  const NAME={lw:'左の面のよこ',rw:'右の面のよこ',th:'上の面のたて',bh:'下の面のたて',bw:'後ろの面のよこ'};
+  const FACE={lw:2,rw:3,th:0,bh:5,bw:4};
+  const OKU='左の面のよこ・右の面のよこ・上の面のたて・下の面のたては、この4つがどれも直方体のおくゆきと同じ長さになります。';
+  const YOKO='前の面と後ろの面は向かい合う面なので、よこの長さは同じになります。上の面・下の面のよこも同じです。';
+  const WHY={lw:OKU,rw:OKU,th:OKU,bh:OKU,bw:YOKO};
+
+  if(kind==='size'){
+    const cand=[];
+    Object.keys(D).forEach(k=>[-1,1].forEach(dd=>{ if(D[k]+dd>=1)cand.push([k,dd]); }));
+    const [k,dd]=pick(cand);
+    D[k]+=dd; bad=FACE[k];
+    e=`${NAME[k]}の長さがちがいます。${WHY[k]}`;
+    tip='見た目の形ではなく、ますの数でくらべます。'+OKU+'また、'+YOKO;
+  }
+
+  // 面をならべる（上の面の高さのぶんだけ下げてから、よこ1列をならべる）
+  const X0=1, YS=1+D.th;
+  const x左=X0, x前=x左+D.lw, x右=x前+w, x後=x右+D.rw;
+  const F=[
+    {n:'上の面',   p:'上下', r:[x前, YS-D.th,  x前+w,      YS]},
+    {n:'前の面',   p:'前後', r:[x前, YS,       x前+w,      YS+t]},
+    {n:'左の面',   p:'左右', r:[x左, YS,       x左+D.lw,   YS+t]},
+    {n:'右の面',   p:'左右', r:[x右, YS,       x右+D.rw,   YS+t]},
+    {n:'後ろの面', p:'前後', r:[x後, YS,       x後+D.bw,   YS+t]},
+    {n:'下の面',   p:'上下', r:[x前, YS+t,     x前+w,      YS+t+D.bh]}
+  ];
+
+  if(kind==='extra'){
+    // よこ1列のいちばん右に足す／上の面のさらに上に足す。どちらも展開図らしく見えるので、
+    // 数えないと気づかない。
+    const add=Math.random()<0.5
+      ? {n:'よけいな面', p:'', r:[x後+D.bw, YS, x後+D.bw+D.rw, YS+t]}
+      : {n:'よけいな面', p:'', r:[x前, YS-D.th-t, x前+w, YS-D.th]};
+    F.push(add); bad=6;
+    e='面が7つあります。直方体の展開図の面は、かならず6つです。';
+    tip='直方体の展開図の面は、かならず6つです。面の数を数えてみましょう。';
+  }
+
+  const g=msNormRects(F);
+  return {mode:'net',faces:F,cols:g.cols,rows:g.rows,bad:bad,n:F.length,e:e,tip:tip,
+    pairHint:(kind==='size'),
+    fact:'直方体の<b>展開図</b>のつもりでかいた図です。まちがっている面を1つさがして、その面をタップしましょう。'};
+}
+
+/* ============ ② けんさんの説明のまちがい ============ */
+function msMakeSay(){
+  const opts=[];
+  for(let w=3;w<=6;w++)for(let h=3;h<=6;h++)for(let d=3;d<=6;d++)
+    if(w!==h&&h!==d&&w!==d&&solidOK(w,h,d))opts.push([w,h,d]);
+  const [dw,dh,dd]=pick(opts);
+  const kinds=['epara','eperp','vedge','fperp'];
+  let kind=pick(kinds); if(kind===MS.last.say)kind=pick(kinds.filter(x=>x!==MS.last.say));
+  MS.last.say=kind;
+  let head='',tail='',correct=[],wrongPool=[],o={labels:true},why='';
+  if(kind==='epara'){
+    const a=Math.floor(Math.random()*12);
+    correct=ALLE.filter(i=>i!==a&&EDIR[i]===EDIR[a]);
+    wrongPool=ALLE.filter(i=>i!==a&&EDIR[i]!==EDIR[a]);
+    head=`辺${ENAME[a]}に平行な辺は、`;
+    o.hlE={[a]:'#e0483b'};
+    why=`辺${ENAME[a]}と同じ向きにのびている辺だけが平行です。`;
+  }else if(kind==='eperp'){
+    const a=Math.floor(Math.random()*12);
+    const share=(i,j)=>EDGES[i].some(v=>EDGES[j].includes(v));
+    correct=ALLE.filter(i=>i!==a&&share(i,a));
+    wrongPool=ALLE.filter(i=>i!==a&&!share(i,a));
+    head=`辺${ENAME[a]}に垂直な辺は、`;
+    o.hlE={[a]:'#e0483b'};
+    why=`頂点${VNAME[EDGES[a][0]]}と頂点${VNAME[EDGES[a][1]]}から出ている辺だけが、辺${ENAME[a]}と垂直にまじわります。`;
+  }else if(kind==='vedge'){
+    const v=Math.floor(Math.random()*8);
+    correct=ALLE.filter(i=>EDGES[i].includes(v));
+    wrongPool=ALLE.filter(i=>!EDGES[i].includes(v));
+    head=`頂点${VNAME[v]}に集まっている辺は、`;
+    o.hlV={[v]:'#e0483b'}; o.circV=v;
+    why=`1つの頂点には、辺が3本ずつ集まっています。`;
+  }else{
+    const f=pick([0,2,4]);                       // 45度でかくと見えている面（前・右・上）
+    correct=ALLE.filter(i=>EDIR[i]===FDIR[f]);
+    wrongPool=ALLE.filter(i=>EDIR[i]!==FDIR[f]);
+    head=`面あに垂直な辺は、`;
+    o.mark=f; o.markCol='#e0483b';
+    why=`面あとまじわって直角になる辺だけです。面あのふちの辺は入りません。`;
+  }
+  const drop=pick(correct), wrong=pick(wrongPool);
+  const list=correct.filter(i=>i!==drop).concat([wrong]).sort((x,y)=>ENAME[x]<ENAME[y]?-1:1);
+  const bad=list.indexOf(wrong);
+  tail=`の${list.length}本です。`;
+  return {mode:'say',dims:[dw,dh,dd],opt:o,list:list,head:head,tail:tail,bad:bad,n:list.length,
+    e:`辺${ENAME[wrong]}はあてはまりません。${why}`,
+    tip:'ヒント中は、けんさんが言っている辺を図の上でみどりにしています。1本ずつ、赤いところとの関係をたしかめましょう。',
+    fact:'けんさんの説明に、まちがいが1つあります。<b>まちがっている辺の記号をタップ</b>しましょう。'};
+}
+
+/* ============ ③ 位置の表し方のまちがい ============ */
+function msMakePos(){
+  const kind=(MS.last.pos==='plane')?'solid':'plane';
+  MS.last.pos=kind;
+  if(kind==='plane'){
+    const G=5, nm=['B','C','D'], ps=[];
+    while(ps.length<3){
+      const x=1+Math.floor(Math.random()*G), y=1+Math.floor(Math.random()*G);
+      if(!ps.some(p=>p[0]===x&&p[1]===y))ps.push([x,y]);
+    }
+    const k=Math.floor(Math.random()*3), tv=[ps[k][0],ps[k][1]];
+    const wi=Math.floor(Math.random()*2);
+    let wv;
+    if(tv[0]!==tv[1]&&Math.random()<0.6)wv=tv[1-wi];      // 横とたてを取りちがえたまちがい
+    else{do{wv=Math.floor(Math.random()*(G+1));}while(wv===tv[wi]);}
+    const show=tv.slice(); show[wi]=wv;
+    return {mode:'pos',sub:'plane',G:G,pts:ps,names:nm,target:k,
+      head:`点Aをもとにすると、点${nm[k]}の位置は`,
+      labs:['横','たて'], unit:'m', vals:show, bad:wi, n:2,
+      e:`点${nm[k]}は（横${tv[0]}m、たて${tv[1]}m）です。もとにする点Aから、右へ${tv[0]}、おくへ${tv[1]}です。`,
+      tip:'もとにする点から「横（右へ）→ たて（おくへ）」の順に、ますを数えます。',
+      fact:'点Aをもとにした<b>位置の表し方</b>です。まちがっている数を1つタップしましょう。'};
+  }
+  const opts=[];
+  for(let w=2;w<=5;w++)for(let h=2;h<=4;h++)for(let d=1;d<=3;d++)
+    if(w!==h&&h!==d&&w!==d&&solidOK3(w,h,d))opts.push([w,h,d]);
+  const [dw,dh,dd]=pick(opts);
+  const cands=[1,6,3,2];                        // G・B・D・C（2つ以上が0でない頂点）
+  const vi=pick(cands);
+  const v=V[vi];
+  const tv=[(v[0]+1)/2*dw, (1-v[2])/2*dd, (v[1]+1)/2*dh];
+  const dim=[dw,dd,dh];
+  const wi=Math.floor(Math.random()*3);
+  const js=[0,1,2].filter(j=>j!==wi&&dim[j]!==tv[wi]);
+  const wv=js.length?dim[pick(js)]:(tv[wi]===0?dim[wi]:0);
+  const show=tv.slice(); show[wi]=wv;
+  return {mode:'pos',sub:'solid',dims:[dw,dh,dd],vi:vi,
+    head:`頂点Eをもとにすると、頂点${VNAME[vi]}の位置は`,
+    labs:['横','たて','高さ'], unit:'cm', vals:show, bad:wi, n:3,
+    e:`頂点${VNAME[vi]}は（横${tv[0]}cm、たて${tv[1]}cm、高さ${tv[2]}cm）です。`,
+    tip:'頂点Eから「横（右へ）→ たて（おくへ）→ 高さ（上へ）」の順に、辺の長さを読みます。',
+    fact:'頂点Eをもとにした<b>位置の表し方</b>です。まちがっている数を1つタップしましょう。'};
+}
+
+/* ============ 画面をかく ============ */
+function msRender(){
+  const svg=document.getElementById('ms-svg'), q=MS.q; if(!q||!svg)return;
+  const say=document.getElementById('ms-say');
+  const col=k=>MS.answered&&k===q.bad?'#2c9e6b':(MS.tried.includes(k)?'#e0483b':null);
+  let g='',W,H;
+
+  if(q.mode==='net'){
+    W=PAD*2+q.cols*CELL; H=PAD*2+q.rows*CELL;
+    g=msGridBG(q.cols,q.rows);
+    const PC={'上下':'#dbe8f7','前後':'#fdeac4','左右':'#d7f0e1','':'#e4e9ee'};
+    q.faces.forEach((f,k)=>{
+      const c=col(k);
+      const x=PAD+f.r[0]*CELL, y=PAD+f.r[1]*CELL, w=(f.r[2]-f.r[0])*CELL, h=(f.r[3]-f.r[1])*CELL;
+      const fill=c?(c==='#2c9e6b'?'#e2f4ea':'#fbe6e4'):((MS.hintOn&&q.pairHint)?PC[f.p]:'#eef5fb');
+      g+=`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" stroke="${c||'#16324c'}" stroke-width="${c?5:3.5}"/>`;
+      if(!MS.answered)g+=`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="transparent" data-msi="${k}" style="cursor:pointer"/>`;
+    });
+    say.style.display='none';
+
+  }else if(q.mode==='say'){
+    W=520;H=420;
+    const o=Object.assign({},q.opt);
+    if(MS.hintOn){o.hlE=Object.assign({},o.hlE);q.list.forEach(i=>{if(o.hlE[i]===undefined)o.hlE[i]='#2c9e6b';});}
+    g=msSolid(q.dims[0],q.dims[1],q.dims[2],W,H,o).svg;
+    say.className='msq ken'; say.style.display='';
+    say.innerHTML='<span class="who">けんさん</span>'+q.head
+      +q.list.map((i,k)=>{const c=col(k);
+        return `<button class="mschip${c==='#2c9e6b'?' good':(c?' bad':'')}" data-msi="${k}"${MS.answered?' disabled':''}>辺${ENAME[i]}</button>`;}).join('、')
+      +q.tail;
+
+  }else{
+    if(q.sub==='plane'){
+      W=460;H=420;
+      const M=64, S=Math.min((W-M*2)/q.G,(H-M*2)/q.G), OX=M, OY=H-M;
+      g=`<rect x="0" y="0" width="${W}" height="${H}" fill="#fff" rx="10"/>`;
+      for(let i=0;i<=q.G;i++){
+        g+=`<line x1="${OX+i*S}" y1="${OY}" x2="${OX+i*S}" y2="${OY-q.G*S}" stroke="#c9dced" stroke-width="1.4"/>`
+          +`<line x1="${OX}" y1="${OY-i*S}" x2="${OX+q.G*S}" y2="${OY-i*S}" stroke="#c9dced" stroke-width="1.4"/>`;}
+      g+=`<line x1="${OX}" y1="${OY}" x2="${OX+q.G*S+16}" y2="${OY}" stroke="#5b7a94" stroke-width="2.5"/>`
+        +`<line x1="${OX}" y1="${OY}" x2="${OX}" y2="${OY-q.G*S-16}" stroke="#5b7a94" stroke-width="2.5"/>`
+        +`<text x="${OX+q.G*S+22}" y="${OY+6}" font-family="Zen Maru Gothic,sans-serif" font-weight="900" font-size="16" fill="#5b7a94">横</text>`
+        +`<text x="${OX-4}" y="${OY-q.G*S-24}" text-anchor="middle" font-family="Zen Maru Gothic,sans-serif" font-weight="900" font-size="16" fill="#5b7a94">たて</text>`;
+      g+=`<circle cx="${OX}" cy="${OY}" r="11" fill="none" stroke="#e0483b" stroke-width="3"/>`
+        +`<circle cx="${OX}" cy="${OY}" r="5" fill="#16324c"/>`
+        +`<text x="${OX-20}" y="${OY+24}" text-anchor="middle" font-family="Zen Maru Gothic,sans-serif" font-weight="900" font-size="18" fill="#16324c">A</text>`;
+      q.pts.forEach((p,i)=>{
+        const x=OX+p[0]*S, y=OY-p[1]*S, on=(i===q.target);
+        g+=`<circle cx="${x}" cy="${y}" r="${on?6.5:5}" fill="${on?'#e0483b':'#16324c'}"/>`
+          +`<text x="${x+15}" y="${y-11}" text-anchor="middle" font-family="Zen Maru Gothic,sans-serif" font-weight="900" font-size="18" fill="${on?'#e0483b':'#16324c'}" stroke="#fff" stroke-width="4" paint-order="stroke">${q.names[i]}</text>`;});
+    }else{
+      W=520;H=420;
+      g=msSolid(q.dims[0],q.dims[1],q.dims[2],W,H,{gk:true,labels:true,circV:4,
+        hlV:{[q.vi]:'#e0483b'},
+        dims:[[4,5,q.dims[0]],[4,0,q.dims[2]],[4,7,q.dims[1]]]}).svg;
+    }
+    say.className='msq'; say.style.display='';
+    say.innerHTML=q.head+'<br>（'+q.vals.map((v,k)=>{const c=col(k);
+      return `<span class="nw">${q.labs[k]} <button class="mschip${c==='#2c9e6b'?' good':(c?' bad':'')}" data-msi="${k}"${MS.answered?' disabled':''}>${v}</button>${q.unit}</span>`;}).join('、')+'）です。';
+  }
+
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svg.innerHTML=g;
+  svg.querySelectorAll('[data-msi]').forEach(el=>el.addEventListener('click',()=>msPick(+el.dataset.msi)));
+  say.querySelectorAll('[data-msi]').forEach(el=>el.addEventListener('click',()=>msPick(+el.dataset.msi)));
+}
+
+/* ============ 出題・答え合わせ ============ */
+function msNew(){
+  clearTimeout(MS.timer);
+  Challenge10.newProblem();
+  MS.q=MS.mode==='net'?msMakeNet():MS.mode==='say'?msMakeSay():msMakePos();
+  MS.answered=false; MS.tried=[]; MS.hintOn=false;
+  const hb=document.querySelector('[data-msact="hint"]'); if(hb)hb.textContent='ヒント';
+  document.getElementById('ms-tip').className='ptip';
+  document.getElementById('ms-msg').className='kp-msg';
+  document.getElementById('ms-fact').innerHTML=MS.q.fact;
+  msRender();
+}
+function msPick(k){
+  if(MS.answered||MS.tried.includes(k))return;
+  const m=document.getElementById('ms-msg');
+  if(k===MS.q.bad){
+    MS.answered=true;
+    m.className='kp-msg show ok'; m.textContent='せいかい！ '+MS.q.e;
+    celebrate(document.querySelector('#panel-miss .stage'));
+    Challenge10.done();
+    msRender();
+    clearTimeout(MS.timer); MS.timer=setTimeout(msNew,3600);
+  }else{
+    MS.tried.push(k);
+    m.className='kp-msg show ng'; m.textContent='ここはあっています。ほかをさがしてみましょう。';
+    Challenge10.miss();
+    msRender();
+  }
+}
+document.querySelectorAll('[data-msact]').forEach(b=>b.addEventListener('click',()=>{
+  const a=b.dataset.msact;
+  clearTimeout(MS.timer);
+  if(a==='new')msNew();
+  if(a==='hint'){
+    MS.hintOn=!MS.hintOn;
+    b.textContent=MS.hintOn?'ヒントを消す':'ヒント';
+    const t=document.getElementById('ms-tip');
+    t.textContent=MS.q.tip; t.className=MS.hintOn?'ptip show':'ptip';
+    msRender();
+  }
+}));
+document.querySelectorAll('[data-mssub]').forEach(b=>b.addEventListener('click',()=>{
+  if(MS.mode===b.dataset.mssub)return;
+  MS.mode=b.dataset.mssub;
+  document.querySelectorAll('[data-mssub]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.mssub===MS.mode)));
+  msNew(); chalSync();
+}));
+msNew();
+
+/* ============================================================
+   10問チャレンジをつなぐ
+   ------------------------------------------------------------
+   ・各タブの「正解した」ところで Challenge10.done()、
+     「まちがえた」ところで miss()、「新しい問題を出した」ところで newProblem() を呼んである。
+   ・autoNext:false なので、つぎの問題に進めるのはアプリ側（今までどおりの秒数）。
+     チャレンジは数えるだけ。
+   ・タブやモードを変えたら数えなおす（chalSync）。
+   ============================================================ */
+function chalScope(){
+  const tab=document.querySelector('.tab[aria-selected="true"]').dataset.tab;
+  if(tab==='basic')return 'basic:'+S.mode;
+  if(tab==='net')return 'net:'+document.querySelector('[data-nsub][aria-pressed="true"]').dataset.nsub;
+  if(tab==='sketch')return 'sketch:'+document.querySelector('[data-ssub][aria-pressed="true"]').dataset.ssub;
+  if(tab==='miss')return 'miss:'+MS.mode;
+  return tab;
+}
+function chalNext(){
+  const s=chalScope();
+  // 「かぞえる」は問題ではないので、チャレンジを押したら「問題」に切りかえる
+  if(s==='basic:count'){setMode('quiz');return;}
+  if(s==='basic:quiz'||s==='basic:feat')startQuiz();
+  else if(s==='net:draw')newProblem('net');
+  else if(s==='net:quiz')nqNew();
+  else if(s==='net:judge')cjNew();
+  else if(s==='sketch:draw')newProblem('sketch');
+  else if(s==='sketch:pick')csNew();
+  else if(s==='perp')perpNew();
+  else if(s==='pos')posNew();
+  else msNew();
+}
+let CHAL_SCOPE=null;
+function chalSync(){
+  const s=chalScope();
+  // 「かぞえる」は問題モードではないので、そこへ移ったらチャレンジはやめる
+  // （ボタンは出したまま。押すと「問題」に切りかわって始まる）
+  if(s==='basic:count'&&Challenge10.isOn())Challenge10.stop();
+  if(s===CHAL_SCOPE)return;
+  CHAL_SCOPE=s;
+  if(Challenge10.isOn())Challenge10.reset();
+}
+Challenge10.init({
+  mount:'#chal-mount',
+  total:10,
+  next:chalNext,
+  autoNext:false,        // つぎの問題に進めるのはアプリ側
+  css:false,             // 見た目はこのアプリのスタイルシート
+  // sound は指定しない。ピンポンは「正解」の合図なので、
+  // ボタンを押しただけで鳴ると、正解したとまぎらわしいうえ、うるさい。
+  record:false,          // true にすると「きょうの最高記録」が残る（共用パソコンでは注意）
+  recordKey:'rippotai'
+});
+chalSync();
 </script>
 </body>
 </html>
